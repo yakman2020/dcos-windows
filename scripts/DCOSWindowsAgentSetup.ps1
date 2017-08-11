@@ -36,7 +36,7 @@ param(
 )
 
 
-. .\packages.ps1
+. $PSScriptRoot\packages.ps1
 
 $global:TestDcosBinariesUri = "https://dcosdevstorage.blob.core.windows.net/dcos-windows"
 
@@ -145,13 +145,19 @@ ValidateMasterIP($input_ip_str)
        $hostlist = ConvertFrom-Json $input_ip_str
 
        $hoststr = "zk://"
-       for ($i = 0; $i -lt $hostlist.count; $i++ )
+       if ($hostlist.count -eq 1)
        {
-           if ($i -gt 0) 
+          $hoststr += $hostlist
+       }
+       else {
+           for ($i = 0; $i -lt $hostlist.count; $i++ )
            {
-              $hoststr += ","
+               if ($i -gt 0) 
+               {
+                  $hoststr += ","
+               }
+               $hoststr += $hostlist[$i]    
            }
-           $hoststr += $hostlist[$i]    
        }
        $hoststr += "/mesos"
    }
