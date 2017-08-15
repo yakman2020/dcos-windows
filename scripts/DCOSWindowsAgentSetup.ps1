@@ -18,6 +18,10 @@ param(
     [ValidateNotNullOrEmpty()]
     $BootstrapUrl,
 
+    [switch]
+    [AllowNull()]
+    $isPublic = $false, # is this a public agent? 
+
     [string]
     [AllowNull()]
     $MesosDownloadDir, # ie c:mesos-download
@@ -258,6 +262,8 @@ try {
     
     Write-Log "Open up the Marathon port (5051)"
  
+    # Only the private node needs 2181 opened, but we will do it for both
+    netsh advfirewall firewall add rule name="Mesos2181" dir=in  protocol=tcp localport=2181 action=allow
     netsh advfirewall firewall add rule name="mesos" dir=in  protocol=tcp localport=5051 action=allow
 
     Write-Log "Register Mesos Service"
@@ -268,6 +274,11 @@ try {
                      +" --launcher_dir="+$global:MesosLaunchDir `
                      +" --ip="+$AgentPrivateIP`
                      +" --isolation=windows/cpu,filesystem/windows --containerizers=docker,mesos")
+
+    if ($isPublic) 
+    {
+        $mesos_run += " --default_role='slave_public'"
+    }
 
 Write-Log "run = "+$mesos_run
 
@@ -282,7 +293,7 @@ Write-Log "run = "+$mesos_run
     Invoke-Expression ($global:NssmDir+"\nssm set Mesos Type SERVICE_INTERACTIVE_PROCESS" )
     Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppThrottle 1500" )
     Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppStdout "+$global:MesosLogDir+"\MesosStdOut.log" )
-    Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppStderr "+$global:MesosLogDir+"\MesosStdOut.log" )
+    Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppStderr "+$global:MesosLogDir+"\MesosStdErr.log" )
     Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppStdoutCreationDisposition 4" )
     Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppStderrCreationDisposition 4" )
     Invoke-Expression ($global:NssmDir+"\nssm set Mesos AppRotateFiles 1" )
