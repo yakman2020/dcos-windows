@@ -273,6 +273,7 @@ try {
                      +" --runtime_dir="+$global:MesosWorkDir `
                      +" --launcher_dir="+$global:MesosLaunchDir `
                      +" --ip="+$AgentPrivateIP`
+                     +" --attributes=os:windows"`
                      +" --isolation=windows/cpu,filesystem/windows --containerizers=docker,mesos")
 
     if ($isPublic) 
