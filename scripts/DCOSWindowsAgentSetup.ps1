@@ -4,6 +4,8 @@
 #
 #
 #
+   
+
 [CmdletBinding(DefaultParameterSetName="Standard")]
 param(
     [string]
@@ -36,9 +38,14 @@ param(
 
     [string]
     [AllowNull()]
-    $MesosWorkDir   # ie c:\mesos\work
+    $MesosWorkDir,	# ie c:\mesos\work
+	
+	[string]
+	[AllowNull()]
+	$customAttrs
 )
 
+    Write-Host ("args = "+$args)
 
 . $PSScriptRoot\packages.ps1
 
@@ -98,6 +105,8 @@ Remove-Directory($dirname)
 function
 Get-DCOSBinaries($download_uri, $download_dir)
 {
+
+
     # Get Mesos Binaries
     $zipfile = ( $global:MesosVersion+$global:MesosBuildNumber+$global:MesosFileType )
 
@@ -267,13 +276,25 @@ try {
     netsh advfirewall firewall add rule name="mesos" dir=in  protocol=tcp localport=5051 action=allow
 
     Write-Log "Register Mesos Service"
+    if ($customAttrs)
+    {
+        $attr_string=$customAttrs
+    }
+    else 
+    {
+        $attr_string = "os:windows"
+        if ($isPublic) 
+        {
+            $attr_string += ";public_ip:yes"
+        }
+    }
     
     $mesos_run = (" --master="+$global:MesosMasterIp `
                      +" --work_dir="+$global:MesosWorkDir `
                      +" --runtime_dir="+$global:MesosWorkDir `
                      +" --launcher_dir="+$global:MesosLaunchDir `
                      +" --ip="+$AgentPrivateIP`
-                     +" --attributes=os:windows"`
+                     +' --attributes="'+$attr_string+'"'`
                      +" --isolation=windows/cpu,filesystem/windows --containerizers=docker,mesos")
 
     if ($isPublic) 
